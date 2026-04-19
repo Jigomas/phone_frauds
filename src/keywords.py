@@ -1,6 +1,5 @@
-# Russian vishing fraud trigger keywords with weights.
-# Each entry: (phrase, weight)
-# Higher weight = stronger fraud indicator.
+# Словарь триггеров для русского вишинга.
+# Формат: (фраза, вес) — чем выше вес, тем сильнее признак мошенничества.
 
 FRAUD_KEYWORDS: list[tuple[str, float]] = [
     # --- Bank impersonation ---
@@ -103,21 +102,61 @@ FRAUD_KEYWORDS: list[tuple[str, float]] = [
 
 # Phrases that are strong indicators of a LEGITIMATE call (negative fraud weight).
 LEGIT_KEYWORDS: list[tuple[str, float]] = [
-    ("это робот", -1.0),
-    ("запись разговора", -0.5),
-    ("служба поддержки", -0.5),
-    ("горячая линия", -0.5),
-    ("консультация", -0.5),
+    # Generic service
+    ("это робот", -2.0),
+    ("запись разговора", -1.5),
+    ("служба поддержки", -2.0),
+    ("горячая линия", -2.0),
+    ("консультация", -1.5),
+    ("колл-центр", -1.5),
+    ("контакт-центр", -1.5),
+    # Delivery
+    ("доставка", -1.5),
+    ("курьер", -2.5),
+    ("трек-номер", -3.0),
+    ("пункт выдачи", -3.0),
+    ("отслеживание", -2.0),
+    ("посылка", -2.0),
+    ("ваш заказ", -1.5),
+    ("интернет-магазин", -2.0),
+    ("вайлдберриз", -2.5),
+    ("озон", -2.5),
+    ("сдэк", -2.5),
+    # Medical
+    ("запись к врачу", -3.0),
+    ("приём у врача", -3.0),
+    ("стоматолог", -3.0),
+    ("поликлиника", -3.0),
+    ("анализы", -2.0),
+    ("регистратура", -3.0),
+    ("осмотр", -1.5),
+    # HR
+    ("резюме", -3.0),
+    ("собеседование", -3.0),
+    ("вакансия", -3.0),
+    ("кандидат", -2.0),
+    # Utilities
+    ("показания счётчиков", -3.0),
+    ("показания счетчиков", -3.0),
+    ("управляющая компания", -2.5),
+    ("плановое отключение", -3.0),
+    ("коммунальные услуги", -2.0),
+    # Telecom
+    ("тарифный план", -2.5),
+    ("лицевой счёт", -1.5),
+    ("баланс телефона", -2.0),
+    ("интернет-провайдер", -2.5),
+    # Survey / feedback
+    ("опрос", -1.5),
+    ("качество обслуживания", -2.0),
+    ("отзыв", -1.5),
 ]
 
 MAX_POSSIBLE_SCORE: float = sum(w for _, w in FRAUD_KEYWORDS)
 
 
 def keyword_score(text: str) -> float:
-    """
-    Returns a score in [0, 1]: fraction of fraud signal detected.
-    Uses simple substring matching on lowercased text.
-    """
+    """Возвращает оценку от 0 до 1 — насколько текст насыщен мошенническими фразами."""
     text_lower = text.lower()
     raw = 0.0
     for phrase, weight in FRAUD_KEYWORDS:
@@ -125,8 +164,8 @@ def keyword_score(text: str) -> float:
             raw += weight
     for phrase, weight in LEGIT_KEYWORDS:
         if phrase in text_lower:
-            raw += weight  # weight is negative
+            raw += weight  # веса отрицательные — снижают счёт
     raw = max(0.0, raw)
-    # Normalise: cap at a realistic ceiling (20% of max = already very suspicious)
+    # Нормализуем: 20% от максимума уже считается очень подозрительным
     ceiling = MAX_POSSIBLE_SCORE * 0.20
     return min(raw / ceiling, 1.0)

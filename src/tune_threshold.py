@@ -1,17 +1,17 @@
 """
-Tune ensemble weights and classification threshold on the labelled dev set.
+Подбирает оптимальные веса и порог на размеченной обучающей выборке.
 
-Usage:
-    python tune_threshold.py --samples_dir vishing/samples
+Использование:
+    python -m src.tune_threshold --samples_dir vishing/samples
 
-The script:
-1. Collects all WAV files from samples/Fraud (label=0) and samples/NotFraud (label=1)
-2. Runs the detector on each file (without ensembling — raw signal scores)
-3. Grid-searches over (w_keyword, w_semantic, w_prosodic, threshold) to maximise F1
-4. Prints the confusion matrix + metrics for the best config
-5. Saves the best config to best_config.json
+Что делает:
+1. Собирает WAV-файлы из samples/Fraud (метка 0) и samples/NotFraud (метка 1)
+2. Прогоняет детектор на каждом файле и собирает сырые оценки трёх сигналов
+3. Перебирает все комбинации весов и порогов, максимизируя F1
+4. Печатает матрицу ошибок и итоговые метрики
+5. Сохраняет лучшую конфигурацию в best_config.json
 
-Re-use the saved config in run_test.py via --config flag or load it manually.
+Сохранённый конфиг потом автоматически подхватывает run_test.py.
 """
 
 import argparse
@@ -25,7 +25,7 @@ from .detector import FraudDetector
 
 
 def collect_samples(samples_dir: str) -> list[tuple[str, int]]:
-    """Returns list of (wav_path, true_label). Fraud=0, NotFraud=1."""
+    """Возвращает список (путь_к_файлу, метка). Мошенник=0, легитимный=1."""
     items: list[tuple[str, int]] = []
     for label, subdir in [(0, "Fraud"), (1, "NotFraud")]:
         folder = os.path.join(samples_dir, subdir)
@@ -70,7 +70,7 @@ def main():
     if args.model:
         detector_kwargs["whisper_model"] = args.model
 
-    # threshold=999 → never fires, we only collect raw signal scores
+    # Порог 999 — никогда не сработает; нужны только сырые оценки сигналов, не финальный label
     detector = FraudDetector(weights={"keyword": 1.0, "semantic": 0.0, "prosodic": 0.0},
                              threshold=999.0, **detector_kwargs)
 
@@ -102,7 +102,7 @@ def main():
     pros = np.array(pros_scores)
     y = np.array(true_labels)
 
-    # Grid search
+    # Перебор всех комбинаций весов и порогов; ищем максимум F1
     best_f1 = -1.0
     best_cfg: dict = {}
 
@@ -119,7 +119,7 @@ def main():
                 combined = wk_n * kw + ws_n * sem + wp_n * pros
                 for thr in threshold_grid:
                     preds = (combined > thr).astype(int)
-                    preds = 1 - preds  # invert: score>thr → fraud(0)
+                    preds = 1 - preds  # инвертируем: score>порога → мошенник(0)
                     m = compute_metrics(preds, y)
                     if m["f1"] > best_f1:
                         best_f1 = m["f1"]

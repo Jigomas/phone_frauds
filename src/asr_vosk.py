@@ -1,6 +1,6 @@
 """
-Vosk-based ASR — fast CPU transcription for Russian.
-Model is downloaded once to ~/.cache/vosk/
+Распознавание речи через Vosk — быстро работает на CPU без GPU.
+Модель скачивается один раз в ~/.cache/vosk/ и кешируется в памяти.
 """
 
 from __future__ import annotations
@@ -40,10 +40,10 @@ def _get_model():
 
 
 def transcribe_vosk(audio_path: str) -> tuple[str, list[dict]]:
-    """Returns (full_text, words_with_timestamps)."""
+    """Возвращает (полный текст, список слов с временны́ми метками)."""
     import subprocess, tempfile
 
-    # Convert to 16kHz mono WAV if needed
+    # Vosk требует 16kHz моно; если файл другой — конвертируем через ffmpeg
     tmp = None
     try:
         with wave.open(audio_path, "rb") as wf:

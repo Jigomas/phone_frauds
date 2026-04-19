@@ -1,19 +1,17 @@
 """
-CLI test runner: scans a folder of WAV files and outputs a CSV.
+Запускает детектор на папке с WAV-файлами и сохраняет результаты в CSV.
 
-Usage:
+Использование:
     python -m src.run_test --folder /path/to/wavs --output results.csv
-    python -m src.run_test --folder /path/to/wavs  # prints to stdout
+    python -m src.run_test --folder /path/to/wavs  # вывод в консоль
 
-CSV format (semicolon-separated):
+Формат CSV (разделитель — точка с запятой):
     filename;label
-    out_c_18.wav;0
-    Nout_b_25.wav;1
+    out_c_18.wav;0     <- мошенник
+    Nout_b_25.wav;1    <- легитимный
 
-label: 0 = fraud, 1 = legit
-
-If best_config.json exists in the working directory, weights and threshold
-are loaded from it automatically (produced by tune_threshold.py).
+Если в рабочей папке есть best_config.json — веса и порог загружаются из него автоматически.
+Файл создаётся скриптом tune_threshold.py.
 """
 
 import argparse
@@ -86,7 +84,6 @@ def main():
     cfg = load_config(args.config)
     detector = build_detector(args, cfg)
 
-    # results keyed by wav_path to preserve order
     results: dict = {}
     t_start = time.perf_counter()
 
@@ -96,8 +93,8 @@ def main():
             result = detector.predict(wav_path)
             results[wav_path] = (result, time.perf_counter() - t0)
     else:
-        # CTranslate2 and sentence-transformers release the GIL — ThreadPoolExecutor works.
-        # Each thread shares the same loaded model; faster-whisper is thread-safe.
+        # sentence-transformers и CTranslate2 отпускают GIL, поэтому потоки реально ускоряют.
+        # Модели загружены один раз и безопасно шарятся между потоками.
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
             future_to_path = {
                 pool.submit(detector.predict, wav_path): wav_path
@@ -109,7 +106,7 @@ def main():
                 result = future.result()
                 results[wav_path] = (result, time.perf_counter() - t0)
 
-    # Output in original sorted order
+    # Выводим в том же порядке, в котором файлы были найдены
     rows: list[tuple[str, int]] = []
     total_elapsed = time.perf_counter() - t_start
 

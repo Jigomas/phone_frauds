@@ -1,10 +1,12 @@
 """
-FraudDetector: main class that combines ASR + keyword + semantic + prosodic signals.
+Основной класс детектора. Объединяет распознавание речи и три сигнала:
+ключевые слова, семантику и просодику — в один взвешенный счёт.
 
-Usage:
+Использование:
     detector = FraudDetector()
     result = detector.predict("path/to/audio.wav")
-    # result = {"label": 0, "fraud_score": 0.82, "transcript": "...", ...}
+    print(result.label)        # 0 = мошенник, 1 = легитимный
+    print(result.fraud_score)  # итоговый счёт от 0 до 1
 """
 
 from __future__ import annotations
@@ -14,15 +16,15 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-# Default ensemble weights (can be overridden after tune_threshold.py)
+# Веса по умолчанию — переопределяются после запуска tune_threshold.py
 DEFAULT_WEIGHTS = {
     "keyword": 0.45,
     "semantic": 0.40,
     "prosodic": 0.15,
 }
-DEFAULT_THRESHOLD = 0.50  # fraud_score > threshold → label=0 (fraud)
+DEFAULT_THRESHOLD = 0.50  # если fraud_score > порога → label=0 (мошенник)
 
-# Whisper model to use. Override via env WHISPER_MODEL.
+# Модель Whisper. Можно переопределить через переменную среды WHISPER_MODEL.
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "large-v3-turbo")
 
 
@@ -62,10 +64,12 @@ class FraudDetector:
             self.device = device
 
         if asr == "auto":
+            # На CPU нет смысла использовать Whisper — он там работает очень медленно
             self.asr = "vosk" if self.device == "cpu" else "whisper"
         else:
             self.asr = asr
 
+        # float16 только на GPU; на CPU быстрее int8
         compute_type = "float16" if self.device == "cuda" else "int8"
         self._compute_type = compute_type
 
@@ -82,7 +86,7 @@ class FraudDetector:
         return self._asr_model
 
     def transcribe(self, audio_path: str) -> tuple[str, list[dict]]:
-        """Returns (full_text, words_with_timestamps)."""
+        """Возвращает (полный текст, список слов с временны́ми метками)."""
         if self.asr == "vosk":
             from .asr_vosk import transcribe_vosk
             return transcribe_vosk(audio_path)
