@@ -45,11 +45,12 @@ class FraudDetector:
         threshold: float = DEFAULT_THRESHOLD,
         device: str = "auto",
         whisper_model: str = WHISPER_MODEL,
+        asr: str = "auto",  # "whisper" | "vosk" | "auto" (vosk on CPU, whisper on GPU)
     ):
         self.weights = weights or DEFAULT_WEIGHTS
         self.threshold = threshold
         self.whisper_model = whisper_model
-        self._asr = None
+        self._asr_model = None
 
         if device == "auto":
             try:
@@ -60,22 +61,33 @@ class FraudDetector:
         else:
             self.device = device
 
+        if asr == "auto":
+            self.asr = "vosk" if self.device == "cpu" else "whisper"
+        else:
+            self.asr = asr
+
         compute_type = "float16" if self.device == "cuda" else "int8"
         self._compute_type = compute_type
 
-    def _load_asr(self):
-        if self._asr is None:
+    def _load_whisper(self):
+        if self._asr_model is None:
             from faster_whisper import WhisperModel
-            self._asr = WhisperModel(
+            print(f"Loading Whisper model '{self.whisper_model}' on {self.device}...", flush=True)
+            self._asr_model = WhisperModel(
                 self.whisper_model,
                 device=self.device,
                 compute_type=self._compute_type,
             )
-        return self._asr
+            print("Whisper model loaded.", flush=True)
+        return self._asr_model
 
     def transcribe(self, audio_path: str) -> tuple[str, list[dict]]:
         """Returns (full_text, words_with_timestamps)."""
-        model = self._load_asr()
+        if self.asr == "vosk":
+            from .asr_vosk import transcribe_vosk
+            return transcribe_vosk(audio_path)
+
+        model = self._load_whisper()
         segments, _ = model.transcribe(
             audio_path,
             language="ru",
@@ -94,6 +106,7 @@ class FraudDetector:
 
     def predict(self, audio_path: str) -> DetectionResult:
         filename = os.path.basename(audio_path)
+        print(f"  -> transcribing {filename}...", flush=True)
         try:
             return self._predict(audio_path, filename)
         except Exception as exc:

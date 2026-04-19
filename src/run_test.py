@@ -31,17 +31,19 @@ DEFAULT_CONFIG = "best_config.json"
 
 def find_wav_files(folder: str) -> list[str]:
     paths = []
-    for entry in sorted(os.scandir(folder), key=lambda e: e.name):
-        if entry.is_file() and entry.name.lower().endswith(".wav"):
-            paths.append(entry.path)
-    return paths
+    for root, _, files in os.walk(folder):
+        for fname in files:
+            if fname.lower().endswith(".wav"):
+                paths.append(os.path.join(root, fname))
+    return sorted(paths)
 
 
 def load_config(config_path: str) -> dict | None:
     if os.path.exists(config_path):
         with open(config_path, encoding="utf-8") as f:
             cfg = json.load(f)
-        print(f"Loaded config from {config_path}", file=sys.stderr)
+        print(f"Loaded config from {config_path} "
+              f"(weights={cfg['weights']}, threshold={cfg['threshold']})", file=sys.stderr)
         return cfg
     return None
 
@@ -52,9 +54,10 @@ def build_detector(args, cfg: dict | None) -> FraudDetector:
         kwargs["weights"] = cfg["weights"]
         kwargs["threshold"] = cfg["threshold"]
     if args.threshold is not None:
-        kwargs["threshold"] = args.threshold   # CLI flag overrides config
+        kwargs["threshold"] = args.threshold
     if args.model:
         kwargs["whisper_model"] = args.model
+    kwargs["asr"] = args.asr
     return FraudDetector(**kwargs)
 
 
@@ -64,7 +67,8 @@ def main():
     parser.add_argument("--output",    default=None,        help="Output CSV path (default: stdout)")
     parser.add_argument("--config",    default=DEFAULT_CONFIG,
                         help=f"Path to best_config.json (default: {DEFAULT_CONFIG})")
-    parser.add_argument("--model",     default=None,        help="Whisper model name")
+    parser.add_argument("--asr",       default="auto",      help="ASR engine: auto|vosk|whisper (default: auto — vosk on CPU, whisper on GPU)")
+    parser.add_argument("--model",     default=None,        help="Whisper model name (only with --asr whisper)")
     parser.add_argument("--threshold", type=float, default=None,
                         help="Override fraud score threshold")
     parser.add_argument("--workers",   type=int,   default=1,

@@ -112,6 +112,27 @@ python -m src.tune_threshold --samples_dir vishing/samples --output best_config.
 Результат: файл `best_config.json` с оптимальными весами и метриками (accuracy, F1, confusion matrix).
 Следующий запуск `run_test.py` подхватит его автоматически.
 
+## Результаты
+
+Тест на закрытой выборке `vishing/test` (60 файлов: 30 Fraud + 30 NotFraud).
+ASR: Vosk `vosk-model-small-ru-0.22`, CPU.
+
+| Метрика   | Значение          |
+| --------- | ----------------- |
+| Accuracy  | **68.3%** (41/60) |
+| Precision | 65.7%             |
+| Recall    | **76.7%**         |
+| F1        | 70.8%             |
+
+```text
+               Предсказано: Fraud  Предсказано: Legit
+True Fraud           TP = 23            FN = 7
+True Legit           FP = 12            TN = 18
+```
+
+> Результаты получены на CPU без GPU. На машине с NVIDIA GPU и моделью
+> `large-v3-turbo` ожидается более высокое качество транскрипции и точность классификации.
+
 ## Требования
 
 - Python 3.9+
