@@ -1,0 +1,42 @@
+[tool.ruff]
+line-length    = 100          # ColumnLimit: 100
+indent-width   = 4            # IndentWidth: 4
+target-version = "py39"
+
+[tool.ruff.format]
+indent-style              = "space"   # UseTab: Never
+quote-style               = "double"
+magic-trailing-comma      = true      # BinPackArguments/Parameters: false
+                                      # — при наличии trailing comma каждый аргумент
+                                      # на отдельной строке
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort  (SortIncludes: true)
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long — уже контролируется форматтером
+]
+
+# SpacesBeforeTrailingComments: 2  →  E262 требует "# " после ##, E265 — блочные
+# ruff enforce это через E26x автоматически
+
+[tool.ruff.lint.isort]
+# IncludeBlocks: Regroup + IncludeCategories (stdlib → third-party → local)
+force-sort-within-sections  = true
+split-on-trailing-comma     = true    # BinPackArguments: false для импортов
+lines-after-imports         = 2       # пустая строка после блока импортов
+known-first-party           = ["detector", "keywords", "semantic", "prosodic"]
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 100
+
+[tool.ruff.lint.per-file-ignores]
+"tune_threshold.py" = ["T201"]   # print() разрешён в скриптах
+"run_test.py"       = ["T201"]

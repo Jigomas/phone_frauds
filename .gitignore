@@ -1,0 +1,86 @@
+# Build directories
+build/
+build-*/
+out/
+cmake-build-*/
+
+# CMake generated
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Compiled objects
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Executables
+rv32i_cpu
+rv32i_tests
+xoros
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# Clang
+.clangd/
+compile_commands.json
+.cache/
+
+# macOS
+.DS_Store
+
+# Sanitizer logs
+*.asan
+*.ubsan
+
+# Windows WSL metadata
+*:Zone.Identifier
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Ruff cache
+.ruff_cache/
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ML model caches (скачиваются автоматически)
+*.pt
+*.pth
+*.onnx
+.cache/huggingface/
+.cache/torch/
+
+# Data
+vishing/
+
+# Tuning / test output
+best_config.json
+results*.csv
