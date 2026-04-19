@@ -56,6 +56,7 @@ def main():
     parser.add_argument("--samples_dir", default="vishing/samples")
     parser.add_argument("--output", default="best_config.json")
     parser.add_argument("--model", default=None)
+    parser.add_argument("--asr", default="auto", help="ASR engine: auto|vosk|whisper")
     args = parser.parse_args()
 
     samples = collect_samples(args.samples_dir)
@@ -65,28 +66,36 @@ def main():
 
     print(f"Loaded {len(samples)} samples.", file=sys.stderr)
 
-    # Collect raw signal scores (no ensembling yet)
-    detector_kwargs: dict = {}
+    detector_kwargs: dict = {"asr": args.asr}
     if args.model:
         detector_kwargs["whisper_model"] = args.model
 
+    # threshold=999 → never fires, we only collect raw signal scores
     detector = FraudDetector(weights={"keyword": 1.0, "semantic": 0.0, "prosodic": 0.0},
-                             threshold=999.0, **detector_kwargs)  # threshold=999 → never fires, collect scores only
+                             threshold=999.0, **detector_kwargs)
 
     kw_scores: list[float] = []
     sem_scores: list[float] = []
     pros_scores: list[float] = []
     true_labels: list[int] = []
 
+    errors = 0
     for i, (path, label) in enumerate(samples):
         print(f"  [{i+1}/{len(samples)}] {os.path.basename(path)} (true={label})", file=sys.stderr)
         r = detector.predict(path)
+        if r.error:
+            print(f"    ERROR: {r.error}", file=sys.stderr)
+            errors += 1
+            continue
         kw_scores.append(r.keyword_score)
         sem_scores.append(r.semantic_score)
         pros_scores.append(r.prosodic_score)
         true_labels.append(label)
         print(f"    kw={r.keyword_score:.3f} sem={r.semantic_score:.3f} pros={r.prosodic_score:.3f}",
               file=sys.stderr)
+
+    if errors:
+        print(f"\nWarning: {errors} files failed to process.", file=sys.stderr)
 
     kw = np.array(kw_scores)
     sem = np.array(sem_scores)
