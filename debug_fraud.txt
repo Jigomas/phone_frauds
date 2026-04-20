@@ -1,0 +1,44 @@
+Found 30 WAV file(s) in vishing/test/Fraud
+Loaded config from best_config.json (weights={'keyword': 0.182, 'semantic': 0.818, 'prosodic': 0.0}, threshold=0.35)
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  45%|████▍     | 89/199 [00:00<00:00, 884.07it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 1627.18it/s]
+[1mXLMRobertaModel LOAD REPORT[0m from: sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | [38;5;208mUNEXPECTED[0m |  | 
+
+Notes:
+- [38;5;208mUNEXPECTED:[0m	[3mcan be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+  out_a_141.wav: label=0 score=0.496 (kw=0.00 sem=0.61 pros=0.09) [41.5s]
+  out_aa_4.wav: label=0 score=0.461 (kw=0.00 sem=0.56 pros=0.02) [9.9s]
+  out_b_16.wav: label=0 score=0.462 (kw=0.00 sem=0.56 pros=0.18) [15.4s]
+  out_b_21.wav: label=0 score=0.447 (kw=0.00 sem=0.55 pros=0.24) [12.9s]
+  out_b_24.wav: label=0 score=0.423 (kw=0.00 sem=0.52 pros=0.22) [11.4s]
+  out_b_26.wav: label=1 score=0.334 (kw=0.00 sem=0.41 pros=0.06) [16.0s]
+  out_b_27.wav: label=0 score=0.404 (kw=0.00 sem=0.49 pros=0.18) [17.3s]
+  out_b_29.wav: label=0 score=0.440 (kw=0.04 sem=0.53 pros=0.19) [14.1s]
+  out_c_1.wav: label=0 score=0.456 (kw=0.00 sem=0.56 pros=0.28) [14.7s]
+  out_c_11.wav: label=0 score=0.582 (kw=0.00 sem=0.71 pros=0.17) [12.7s]
+  out_c_12.wav: label=0 score=0.500 (kw=0.04 sem=0.60 pros=0.25) [13.9s]
+  out_c_13.wav: label=0 score=0.417 (kw=0.00 sem=0.51 pros=0.25) [12.9s]
+  out_c_14.wav: label=0 score=0.468 (kw=0.00 sem=0.57 pros=0.16) [11.0s]
+  out_c_15.wav: label=1 score=0.349 (kw=0.00 sem=0.43 pros=0.15) [13.3s]
+  out_c_16.wav: label=0 score=0.427 (kw=0.12 sem=0.50 pros=0.17) [11.6s]
+  out_c_17.wav: label=0 score=0.466 (kw=0.00 sem=0.57 pros=0.17) [12.3s]
+  out_c_18.wav: label=0 score=0.498 (kw=0.05 sem=0.60 pros=0.15) [11.0s]
+  out_c_19.wav: label=0 score=0.410 (kw=0.00 sem=0.50 pros=0.12) [10.6s]
+  out_c_20.wav: label=0 score=0.377 (kw=0.00 sem=0.46 pros=0.25) [9.2s]
+  out_d_10.wav: label=0 score=0.443 (kw=0.00 sem=0.54 pros=0.27) [13.1s]
+  out_d_13.wav: label=0 score=0.486 (kw=0.00 sem=0.59 pros=0.25) [17.0s]
+  out_d_14.wav: label=0 score=0.487 (kw=0.00 sem=0.60 pros=0.25) [12.8s]
+  out_d_19.wav: label=0 score=0.541 (kw=0.07 sem=0.65 pros=0.26) [12.5s]
+  out_d_2.wav: label=0 score=0.444 (kw=0.04 sem=0.53 pros=0.23) [15.2s]
+  out_d_20.wav: label=0 score=0.389 (kw=0.00 sem=0.48 pros=0.28) [18.7s]
+  out_d_25.wav: label=0 score=0.544 (kw=0.06 sem=0.65 pros=0.25) [13.3s]
+  out_d_28.wav: label=0 score=0.469 (kw=0.04 sem=0.56 pros=0.26) [9.7s]
+  out_d_3.wav: label=0 score=0.499 (kw=0.00 sem=0.61 pros=0.28) [14.6s]
+  out_d_33.wav: label=0 score=0.422 (kw=0.00 sem=0.52 pros=0.26) [13.8s]
+  out_d_8.wav: label=0 score=0.445 (kw=0.00 sem=0.54 pros=0.25) [16.6s]
+
+Total: 30 files in 429.0s (14.3s avg)
+Results written to /dev/null

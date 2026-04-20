@@ -10,7 +10,7 @@
 WAV-файл
    │
    ▼
-[faster-whisper ASR]  — транскрипция речи на русском (GPU/CPU)
+[ASR: Vosk (CPU) / faster-whisper (GPU)]  — транскрипция речи
    │
    ▼
 ┌──────────────────────────────────────────────────┐
@@ -51,6 +51,7 @@ phone_frauds/
 │   └── test/
 │       ├── Fraud/           # 30 тестовых мошеннических записей
 │       └── NotFraud/        # 30 тестовых легитимных записей
+├── best_config.json         # Оптимальные веса и порог (подбирает tune_threshold.py)
 ├── requirements.txt
 ├── CMakeLists.txt
 └── README.md
@@ -59,34 +60,34 @@ phone_frauds/
 ## Установка
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
 Модели скачиваются автоматически при первом запуске:
 
-- `faster-whisper large-v3-turbo` (~1.5 ГБ)
-- `paraphrase-multilingual-mpnet-base-v2` (~420 МБ)
-
-Сменить модель Whisper: `export WHISPER_MODEL=medium`
+- `vosk-model-small-ru-0.22` (~45 МБ, CPU) — по умолчанию
+- `paraphrase-multilingual-mpnet-base-v2` (~420 МБ, sentence-transformers)
+- `faster-whisper large-v3-turbo` (~1.5 ГБ, только при наличии GPU)
 
 ## Использование
 
-### Тест по папке с файлами
+### Запуск детектора на папке с файлами
 
 ```bash
-# Запускать из корня проекта phone_frauds/
-python -m src.run_test --folder vishing/test/Fraud --output results.csv
+# запускать из корня проекта phone_frauds/
+python -m src.run_test --folder vishing/test --output results.csv --asr vosk
 ```
 
-Если в корне проекта есть `best_config.json` (после `tune_threshold`),
-веса и порог подгружаются автоматически.
+Если в корне есть `best_config.json`, веса и порог подгружаются автоматически.
 
 Формат результата (`results.csv`):
 
 ```csv
 filename;label
 out_c_18.wav;0
-out_c_19.wav;0
+Nout_b_25.wav;1
 ```
 
 `label: 0` — мошеннический разговор, `1` — легитимный.
@@ -97,53 +98,61 @@ out_c_19.wav;0
 | ------------- | ------------------------------------- | -------------------- |
 | `--folder`    | Папка с WAV-файлами                   | обязательный         |
 | `--output`    | Путь к CSV (иначе stdout)             | —                    |
+| `--asr`       | ASR-движок: `vosk`, `whisper`, `auto` | `auto`               |
 | `--config`    | Путь к `best_config.json`             | `best_config.json`   |
 | `--model`     | Whisper модель                        | `large-v3-turbo`     |
 | `--threshold` | Порог (переопределяет config)         | из config или `0.50` |
-| `--workers`   | Параллельные потоки (CPU: 4+, GPU: 1) | `1`                  |
+| `--workers`   | Параллельные потоки                   | `1`                  |
 | `--verbose`   | Подробный вывод по каждому файлу      | выключен             |
 
-### Подбор оптимальных весов (опционально)
+### Подбор оптимальных весов
 
 ```bash
-python -m src.tune_threshold --samples_dir vishing/samples --output best_config.json
+python -m src.tune_threshold --samples_dir vishing/samples --asr vosk
 ```
 
-Результат: файл `best_config.json` с оптимальными весами и метриками (accuracy, F1, confusion matrix).
+Результат: `best_config.json` с оптимальными весами и метриками.
 Следующий запуск `run_test.py` подхватит его автоматически.
 
 ## Результаты
 
-Тест на закрытой выборке `vishing/test` (60 файлов: 30 Fraud + 30 NotFraud).
-ASR: Vosk `vosk-model-small-ru-0.22`, CPU.
+Тест на закрытой выборке `vishing/test` (60 файлов: 30 Fraud + 30 NotFraud).  
+ASR: Vosk `vosk-model-small-ru-0.22`, CPU.  
+Конфигурация: keyword=0.182, semantic=0.818, threshold=0.40.
 
 | Метрика   | Значение          |
 | --------- | ----------------- |
 | Accuracy  | **68.3%** (41/60) |
-| Precision | 65.7%             |
-| Recall    | **76.7%**         |
-| F1        | 70.8%             |
+| Precision | 63.4%             |
+| Recall    | **86.7%**         |
+| F1        | 73.2%             |
 
 ```text
                Предсказано: Fraud  Предсказано: Legit
-True Fraud           TP = 23            FN = 7
-True Legit           FP = 12            TN = 18
+True Fraud           TP = 26            FN = 4
+True Legit           FP = 15            TN = 15
 ```
 
-> Результаты получены на CPU без GPU. На машине с NVIDIA GPU и моделью
-> `large-v3-turbo` ожидается более высокое качество транскрипции и точность классификации.
+Высокий Recall (86.7%) — алгоритм пропускает лишь 4 мошеннических звонка из 30.
+Основные ошибки (FP=15) — легитимные звонки с банковской тематикой, которые
+семантически похожи на мошеннические.
+
+> **Ограничение:** результаты получены с Vosk small-ru (CPU). Модель компактная
+> и быстрая (~13 сек/файл), но пропускает часть ключевых фраз. С Whisper на GPU
+> ожидается более высокое качество транскрипции и точность.
 
 ## Требования
 
 - Python 3.9+
-- CUDA-совместимая GPU (опционально, работает и на CPU)
 - ОЗУ: ≥8 ГБ
-- Время обработки: ~10–30 с / файл на RTX 4090
+- GPU (опционально, для Whisper): CUDA-совместимая
+- Время обработки: ~13 сек/файл (Vosk, CPU)
 
 ## Зависимости
 
 ```text
-faster-whisper        — ASR (Whisper через CTranslate2)
+vosk                  — ASR на CPU (Vosk small-ru)
+faster-whisper        — ASR на GPU (Whisper через CTranslate2)
 sentence-transformers — семантические эмбеддинги
 librosa               — аудио-признаки
 torch                 — бэкенд для моделей

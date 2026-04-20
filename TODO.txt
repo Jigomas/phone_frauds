@@ -1,0 +1,12 @@
+Улучшения (по приоритету)
+
+TODO: Лучший ASR — главная причина низкой точности (kw≈0 у большинства файлов)
+   - vosk-model-ru-0.42 (~1.5 ГБ, CPU, ~2–3 мин/файл)
+   - Whisper medium/large на GPU
+
+TODO: MFCC и спектральные признаки в prosodic.py (не зависят от качества ASR)
+
+TODO: Русская семантическая модель: ai-forever/sbert_large_nlu_ru вместо multilingual
+
+TODO: Учёт количества вхождений в keyword_score: count() вместо in, cap=3
+
